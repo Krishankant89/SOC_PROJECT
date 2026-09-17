@@ -6,8 +6,8 @@ Sources: Wazuh, Suricata (raw events stored as JSON text).
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -56,6 +56,18 @@ class Alert(Base):
     # ── Raw event payload ─────────────────────────────────────────────────────
     raw_event: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Stored as JSON string; kept as Text to avoid DB-specific JSON types.
+
+    # ── Incident relationship ────────────────────────────────────────────────
+    incident_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("incidents.id"),
+        nullable=True,
+        index=True,
+    )
+    incident: Mapped["Incident | None"] = relationship(
+        "Incident",
+        back_populates="alerts",
+    )
 
     def __repr__(self) -> str:
         return f"<Alert id={self.id!r} severity={self.severity!r} host={self.host!r}>"
